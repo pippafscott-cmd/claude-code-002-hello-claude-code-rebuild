@@ -34,6 +34,8 @@
 
   // ── Question screen ─────────────────────────────────────────
 
+  let shuffledCorrectIndex = 0;
+
   function showQuestion() {
     const q = quizConfig.questions[currentQuestion];
     const total = quizConfig.questions.length;
@@ -48,10 +50,18 @@
     const optionsEl = document.getElementById("options");
     optionsEl.innerHTML = "";
 
-    q.options.forEach(function (option, index) {
+    // Shuffle options, keeping track of where the correct answer lands
+    const indexed = q.options.map(function (opt, i) { return { opt: opt, i: i }; });
+    for (let n = indexed.length - 1; n > 0; n--) {
+      const r = Math.floor(Math.random() * (n + 1));
+      const tmp = indexed[n]; indexed[n] = indexed[r]; indexed[r] = tmp;
+    }
+    shuffledCorrectIndex = indexed.findIndex(function (o) { return o.i === q.correct; });
+
+    indexed.forEach(function (item, index) {
       const btn = document.createElement("button");
       btn.className = "option";
-      btn.textContent = option;
+      btn.textContent = item.opt;
       btn.addEventListener("click", function () {
         handleAnswer(index);
       });
@@ -60,15 +70,14 @@
   }
 
   function handleAnswer(selectedIndex) {
-    const q = quizConfig.questions[currentQuestion];
     const options = document.querySelectorAll(".option");
 
     // Lock in the answer — disable all options
     options.forEach((btn) => (btn.disabled = true));
 
     // Highlight correct and (if wrong) selected
-    options[q.correct].classList.add("correct");
-    if (selectedIndex !== q.correct) {
+    options[shuffledCorrectIndex].classList.add("correct");
+    if (selectedIndex !== shuffledCorrectIndex) {
       options[selectedIndex].classList.add("incorrect");
     } else {
       score++;
